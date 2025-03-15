@@ -17,6 +17,11 @@ type GetLocationRequest struct {
 	ID string `query:"id" json:"id" bson:"_id" validate:"required"`
 }
 
+type GetLocationsRequest struct {
+	Page  int `query:"page" json:"page" bson:"page" validate:"required"`
+	Limit int `query:"limit" json:"limit" bson:"limit" validate:"required"`
+}
+
 func (req *CreateLocationRequest) ValidateLocation() error {
 	return validate.Struct(req)
 }

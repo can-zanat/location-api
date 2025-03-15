@@ -32,6 +32,23 @@ var testGetLocationRes = model.GetLocationResponse{
 	MarkerColor: "FFFFFF",
 }
 
+var testGetLocationsReq = model.GetLocationsRequest{
+	Page:  1,
+	Limit: 1,
+}
+
+var testGetLocationsRes = model.GetLocationsResponse{
+	Locations: []model.GetLocationResponse{
+		{
+			ID:          "67d562e3d9f2d225ca4d9918",
+			Name:        "test",
+			Latitude:    1.1,
+			Longitude:   1.1,
+			MarkerColor: "FFFFFF",
+		},
+	},
+}
+
 func TestService_CreateLocation(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -106,6 +123,45 @@ func TestService_GetLocation(t *testing.T) {
 		service := NewService(mockRepository)
 
 		_, err = service.GetLocation(&testGetLocationReq)
+		assert.Equal(t, expectedError, err)
+	})
+}
+
+func TestService_GetLocations(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	t.Run("should get locations properly", func(t *testing.T) {
+		mockRepository := NewMockStore(ctrl)
+
+		mockRepository.
+			EXPECT().
+			GetLocations(&testGetLocationsReq).
+			Return(&testGetLocationsRes, nil).
+			Times(1)
+
+		service := NewService(mockRepository)
+
+		locationsRes, _ := service.GetLocations(&testGetLocationsReq)
+		assert.Equal(t, &testGetLocationsRes, locationsRes)
+	})
+
+	t.Run("return error", func(t *testing.T) {
+		mockRepository := NewMockStore(ctrl)
+
+		var err error
+
+		expectedError := fiber.NewError(fiber.StatusInternalServerError, "Internal Server Error")
+
+		mockRepository.
+			EXPECT().
+			GetLocations(&testGetLocationsReq).
+			Return(nil, &fiber.Error{Code: 500, Message: "Internal Server Error"}).
+			Times(1)
+
+		service := NewService(mockRepository)
+
+		_, err = service.GetLocations(&testGetLocationsReq)
 		assert.Equal(t, expectedError, err)
 	})
 }

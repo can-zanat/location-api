@@ -14,6 +14,7 @@ type Handler struct {
 type actions interface {
 	CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error)
 	GetLocation(req *model.GetLocationRequest) (*model.GetLocationResponse, error)
+	GetLocations(req *model.GetLocationsRequest) (*model.GetLocationsResponse, error)
 }
 
 func NewHandler(service actions) *Handler {
@@ -23,6 +24,7 @@ func NewHandler(service actions) *Handler {
 func (h *Handler) RegisterRoutes(app *fiber.App) {
 	app.Post("/location", h.CreateLocation)
 	app.Get("/location", h.GetLocation)
+	app.Get("/locations", h.GetLocations)
 }
 
 func (h *Handler) CreateLocation(ctx *fiber.Ctx) error {
@@ -56,6 +58,21 @@ func (h *Handler) GetLocation(ctx *fiber.Ctx) error {
 	}
 
 	res, err := h.service.GetLocation(&req)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(res)
+}
+
+func (h *Handler) GetLocations(ctx *fiber.Ctx) error {
+	var req model.GetLocationsRequest
+
+	if err := ctx.QueryParser(&req); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
+	}
+
+	res, err := h.service.GetLocations(&req)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}

@@ -16,6 +16,7 @@ import (
 type Store interface {
 	CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error)
 	GetLocation(req *model.GetLocationRequest) (*model.GetLocationResponse, error)
+	GetLocations(req *model.GetLocationsRequest) (*model.GetLocationsResponse, error)
 }
 
 type MongoDBStore struct {
@@ -94,4 +95,49 @@ func (store *MongoDBStore) GetLocation(req *model.GetLocationRequest) (*model.Ge
 		Longitude:   location.Longitude,
 		MarkerColor: location.MarkerColor,
 	}, nil
+}
+
+func (store *MongoDBStore) GetLocations(req *model.GetLocationsRequest) (*model.GetLocationsResponse, error) {
+	collection := store.Client.Database("location").Collection("locations")
+
+	var page, limit = int64(req.Page), int64(req.Limit)
+	if page < 1 {
+		page = 1
+	}
+
+	if limit < 1 {
+		limit = 10
+	}
+
+	skip := (page - 1) * limit
+
+	opts := options.Find().SetSkip(skip).SetLimit(limit)
+	filter := bson.M{}
+
+	cursor, err := collection.Find(context.TODO(), filter, opts)
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.TODO())
+
+	var locations []model.GetLocationResponse
+
+	for cursor.Next(context.TODO()) {
+		var location model.GetLocationResponse
+		if err := cursor.Decode(&location); err != nil {
+			return nil, err
+		}
+
+		locations = append(locations, location)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(locations) == 0 {
+		return nil, mongo.ErrNoDocuments
+	}
+
+	return &model.GetLocationsResponse{Locations: locations}, nil
 }

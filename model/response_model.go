@@ -11,3 +11,7 @@ type GetLocationResponse struct {
 	Longitude   float64 `json:"longitude" bson:"longitude"`
 	MarkerColor string  `json:"marker_color" bson:"marker_color"`
 }
+
+type GetLocationsResponse struct {
+	Locations []GetLocationResponse `json:"locations"`
+}

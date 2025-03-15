@@ -149,3 +149,54 @@ func TestMongoDBStore_GetLocation(t *testing.T) {
 		t.Logf("Got location with ID: %s", resp.ID)
 	})
 }
+
+func TestMongoDBStore_GetLocations(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
+	t.Run("should return no locations found", func(t *testing.T) {
+		store, clean := prepareTestStore(t)
+		defer clean()
+
+		req := &model.GetLocationsRequest{}
+
+		resp, err := store.GetLocations(req)
+		if err == nil {
+			t.Fatalf("Expected error, but got nil")
+		}
+
+		assert.Nil(t, resp)
+		assert.Equal(t, mongo.ErrNoDocuments, err)
+	})
+	t.Run("should get locations", func(t *testing.T) {
+		store, clean := prepareTestStore(t)
+		defer clean()
+
+		collection := store.Client.Database("location").Collection("locations")
+		locationDoc := bson.M{
+			"name":         "test3",
+			"latitude":     124.12,
+			"longitude":    134.12,
+			"marker_color": "FFFAFF",
+		}
+
+		_, err := collection.InsertOne(context.Background(), locationDoc)
+		if err != nil {
+			t.Fatalf("Failed to insert location: %v", err)
+		}
+
+		req := &model.GetLocationsRequest{}
+
+		resp, err := store.GetLocations(req)
+		if err != nil {
+			t.Fatalf("Failed to get locations: %v", err)
+		}
+
+		if len(resp.Locations) == 0 {
+			t.Fatalf("Expected locations to be returned, got empty slice")
+		}
+
+		t.Logf("Got %d locations", len(resp.Locations))
+	})
+}

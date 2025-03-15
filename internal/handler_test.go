@@ -199,6 +199,89 @@ func TestHandler_GetLocation(t *testing.T) {
 	})
 }
 
+func TestHandler_GetLocations(t *testing.T) {
+	t.Run("should get location properly", func(t *testing.T) {
+		mockService, mockServiceController := createMockService(t)
+		defer mockServiceController.Finish()
+
+		app := createTestApp()
+
+		mockService.
+			EXPECT().
+			GetLocations(&testGetLocationsReq).
+			Return(&testGetLocationsRes, nil).
+			Times(1)
+
+		handler := NewHandler(mockService)
+		handler.RegisterRoutes(app)
+
+		req := httptest.NewRequest(
+			http.MethodGet,
+			"/locations?page=1&limit=1",
+			http.NoBody,
+		)
+		req.Header.Set("Content-Type", "application/json")
+
+		res, err := app.Test(req)
+		defer res.Body.Close()
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+	})
+
+	t.Run("should return internal server error", func(t *testing.T) {
+		mockService, mockServiceController := createMockService(t)
+		defer mockServiceController.Finish()
+
+		app := createTestApp()
+
+		mockService.
+			EXPECT().
+			GetLocations(&testGetLocationsReq).
+			Return(nil, assert.AnError).
+			Times(1)
+
+		handler := NewHandler(mockService)
+		handler.RegisterRoutes(app)
+
+		req := httptest.NewRequest(
+			http.MethodGet,
+			"/locations?page=1&limit=1",
+			http.NoBody,
+		)
+		req.Header.Set("Content-Type", "application/json")
+
+		res, err := app.Test(req)
+		defer res.Body.Close()
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
+	})
+
+	t.Run("should return bad request error", func(t *testing.T) {
+		mockService, mockServiceController := createMockService(t)
+		defer mockServiceController.Finish()
+
+		app := createTestApp()
+
+		handler := NewHandler(mockService)
+		handler.RegisterRoutes(app)
+
+		req := httptest.NewRequest(
+			http.MethodGet,
+			"/locations?page=1&limit=test",
+			http.NoBody,
+		)
+		req.Header.Set("Content-Type", "application/json")
+
+		res, err := app.Test(req)
+		defer res.Body.Close()
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+	})
+}
+
 func createMockService(t *testing.T) (*Mockactions, *gomock.Controller) {
 	t.Helper()
 
