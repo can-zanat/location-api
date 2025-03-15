@@ -10,10 +10,13 @@
 package internal
 
 import (
+	model "location-api/model"
+	reflect "reflect"
+
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockLocationDbStore is a mock of LocationDbStore interface.
+// MockLocationDbStore is a mock of LocationDBStore interface.
 type MockLocationDbStore struct {
 	ctrl     *gomock.Controller
 	recorder *MockLocationDbStoreMockRecorder
@@ -34,4 +37,19 @@ func NewMockLocationDbStore(ctrl *gomock.Controller) *MockLocationDbStore {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockLocationDbStore) EXPECT() *MockLocationDbStoreMockRecorder {
 	return m.recorder
+}
+
+// CreateLocation mocks base method.
+func (m *MockLocationDbStore) CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateLocation", req)
+	ret0, _ := ret[0].(*model.CreateLocationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateLocation indicates an expected call of CreateLocation.
+func (mr *MockLocationDbStoreMockRecorder) CreateLocation(req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLocation", reflect.TypeOf((*MockLocationDbStore)(nil).CreateLocation), req)
 }

@@ -3,13 +3,19 @@ package internal
 import (
 	"context"
 	"location-api/configs"
+	"location-api/model"
 	"log"
+	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Store interface{}
+type Store interface {
+	CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error)
+}
 
 type MongoDBStore struct {
 	Client *mongo.Client
@@ -35,4 +41,28 @@ func NewStore() *MongoDBStore {
 	return &MongoDBStore{
 		Client: client,
 	}
+}
+
+func (store *MongoDBStore) CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error) {
+	collection := store.Client.Database("location").Collection("locations")
+
+	doc := bson.M{
+		"name":         req.Name,
+		"latitude":     req.Latitude,
+		"longitude":    req.Longitude,
+		"marker_color": req.MarkerColor,
+		"created_at":   time.Now(),
+	}
+
+	result, err := collection.InsertOne(context.TODO(), doc)
+	if err != nil {
+		return nil, err
+	}
+
+	insertedID, ok := result.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return nil, mongo.ErrNilDocument
+	}
+
+	return &model.CreateLocationResponse{ID: insertedID.Hex()}, nil
 }

@@ -10,6 +10,9 @@
 package internal
 
 import (
+	model "location-api/model"
+	reflect "reflect"
+
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -34,4 +37,19 @@ func NewMockactions(ctrl *gomock.Controller) *Mockactions {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *Mockactions) EXPECT() *MockactionsMockRecorder {
 	return m.recorder
+}
+
+// CreateLocation mocks base method.
+func (m *Mockactions) CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateLocation", req)
+	ret0, _ := ret[0].(*model.CreateLocationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateLocation indicates an expected call of CreateLocation.
+func (mr *MockactionsMockRecorder) CreateLocation(req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLocation", reflect.TypeOf((*Mockactions)(nil).CreateLocation), req)
 }
