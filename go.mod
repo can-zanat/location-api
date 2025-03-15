@@ -1,6 +1,6 @@
 module location-api
 
-go 1.23.6
+go 1.22.5
 
 require (
 	github.com/can-zanat/gologger v0.0.0-20230728185208-d622be36c2aa
@@ -8,6 +8,7 @@ require (
 	github.com/prometheus/client_golang v1.21.1
 	github.com/spf13/viper v1.19.0
 	go.mongodb.org/mongo-driver v1.17.3
+	go.uber.org/mock v0.5.0
 	go.uber.org/zap v1.27.0
 )
 

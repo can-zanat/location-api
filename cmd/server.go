@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/gofiber/fiber/v2"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/gofiber/fiber/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 
