@@ -200,3 +200,81 @@ func TestMongoDBStore_GetLocations(t *testing.T) {
 		t.Logf("Got %d locations", len(resp.Locations))
 	})
 }
+
+func TestMongoDBStore_UpdateLocations(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
+	t.Run("should update locations", func(t *testing.T) {
+		store, clean := prepareTestStore(t)
+		defer clean()
+
+		collection := store.Client.Database("location").Collection("locations")
+
+		locationDocs := []interface{}{
+			bson.M{
+				"name":         "test3",
+				"latitude":     124.12,
+				"longitude":    134.12,
+				"marker_color": "FFFAFF",
+			},
+			bson.M{
+				"name":         "test5",
+				"latitude":     125.12,
+				"longitude":    135.12,
+				"marker_color": "000000",
+			},
+		}
+
+		result, err := collection.InsertMany(context.Background(), locationDocs)
+		if err != nil {
+			t.Fatalf("Failed to insert locations: %v", err)
+		}
+
+		var insertedIDs []string
+
+		for _, id := range result.InsertedIDs {
+			objectID, ok := id.(primitive.ObjectID)
+			if !ok {
+				t.Fatalf("Failed to convert inserted ID to ObjectID")
+			}
+
+			insertedIDs = append(insertedIDs, objectID.Hex())
+		}
+
+		req := &model.UpdateLocationsRequest{
+			Locations: []model.UpdateLocation{
+				{
+					ID:          insertedIDs[0],
+					Name:        "test4",
+					Latitude:    124.13,
+					Longitude:   134.13,
+					MarkerColor: "FFFAFE",
+				},
+				{
+					ID:          insertedIDs[1],
+					Name:        "test6",
+					Latitude:    125.13,
+					Longitude:   135.13,
+					MarkerColor: "111111",
+				},
+			},
+		}
+
+		resp, err := store.UpdateLocations(req)
+		if err != nil {
+			t.Fatalf("Failed to update locations: %v", err)
+		}
+
+		if len(resp.UpdatedIDs) == 0 {
+			t.Fatalf("Expected updated IDs, got empty array")
+		}
+
+		if len(resp.FailedIDs) != 0 {
+			t.Fatalf("Expected no failed IDs, but got: %v", resp.FailedIDs)
+		}
+
+		t.Logf("Updated locations with IDs: %v", resp.UpdatedIDs)
+	})
+}

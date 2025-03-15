@@ -15,3 +15,9 @@ type GetLocationResponse struct {
 type GetLocationsResponse struct {
 	Locations []GetLocationResponse `json:"locations"`
 }
+
+type UpdateLocationsResponse struct {
+	UpdatedIDs   []string `json:"updated_ids"`
+	FailedIDs    []string `json:"failed_ids"`
+	UpdatedCount int64    `json:"updated_count"`
+}

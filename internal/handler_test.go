@@ -282,6 +282,127 @@ func TestHandler_GetLocations(t *testing.T) {
 	})
 }
 
+func TestHandler_UpdateLocations(t *testing.T) {
+	t.Run("should update locations properly", func(t *testing.T) {
+		mockService, mockServiceController := createMockService(t)
+		defer mockServiceController.Finish()
+
+		app := createTestApp()
+
+		mockService.
+			EXPECT().
+			UpdateLocations(&testUpdateLocationsReq).
+			Return(&testUpdateLocationsRes, nil).
+			Times(1)
+
+		handler := NewHandler(mockService)
+		handler.RegisterRoutes(app)
+
+		reqBody := `{
+			"locations": [
+				{
+					"id": "67d562e3d9f2d225ca4d9918",
+					"name": "test",
+					"latitude": 1.1,
+					"longitude": 1.1,
+					"marker_color": "FFFFFF"
+				},
+				{
+					"id": "67d562e3d9f2d225ca4d9919",
+					"name": "test2",
+					"latitude": 2.2,
+					"longitude": 2.2,
+					"marker_color": "000000"
+				}
+			]
+		}`
+
+		req := httptest.NewRequest(
+			http.MethodPatch,
+			"/locations",
+			bytes.NewReader([]byte(reqBody)),
+		)
+		req.Header.Set("Content-Type", "application/json")
+
+		res, err := app.Test(req)
+		defer res.Body.Close()
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+	})
+
+	t.Run("should return internal server error", func(t *testing.T) {
+		mockService, mockServiceController := createMockService(t)
+		defer mockServiceController.Finish()
+
+		app := createTestApp()
+
+		mockService.
+			EXPECT().
+			UpdateLocations(&testUpdateLocationsReq).
+			Return(nil, assert.AnError).
+			Times(1)
+
+		handler := NewHandler(mockService)
+		handler.RegisterRoutes(app)
+
+		reqBody := `{
+			"locations": [
+				{
+					"id": "67d562e3d9f2d225ca4d9918",
+					"name": "test",
+					"latitude": 1.1,
+					"longitude": 1.1,
+					"marker_color": "FFFFFF"
+				},
+				{
+					"id": "67d562e3d9f2d225ca4d9919",
+					"name": "test2",
+					"latitude": 2.2,
+					"longitude": 2.2,	
+					"marker_color": "000000"
+				}
+			]
+		}`
+
+		req := httptest.NewRequest(
+			http.MethodPatch,
+			"/locations",
+			bytes.NewReader([]byte(reqBody)),
+		)
+		req.Header.Set("Content-Type", "application/json")
+
+		res, err := app.Test(req)
+		defer res.Body.Close()
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
+	})
+
+	t.Run("should return bad request error when body is empty", func(t *testing.T) {
+		mockService, mockServiceController := createMockService(t)
+		defer mockServiceController.Finish()
+
+		app := createTestApp()
+
+		handler := NewHandler(mockService)
+		handler.RegisterRoutes(app)
+
+		req := httptest.NewRequest(
+			http.MethodPatch,
+			"/locations",
+			http.NoBody,
+		)
+		req.Header.Set("Content-Type", "application/json")
+
+		res, err := app.Test(req)
+		defer res.Body.Close()
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+	})
+}
+
 func createMockService(t *testing.T) (*Mockactions, *gomock.Controller) {
 	t.Helper()
 

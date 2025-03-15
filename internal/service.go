@@ -10,6 +10,7 @@ type LocationDBStore interface {
 	CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error)
 	GetLocation(req *model.GetLocationRequest) (*model.GetLocationResponse, error)
 	GetLocations(req *model.GetLocationsRequest) (*model.GetLocationsResponse, error)
+	UpdateLocations(req *model.UpdateLocationsRequest) (*model.UpdateLocationsResponse, error)
 }
 
 func NewService(s Store) *Service {
@@ -26,4 +27,8 @@ func (s *Service) GetLocation(req *model.GetLocationRequest) (*model.GetLocation
 
 func (s *Service) GetLocations(req *model.GetLocationsRequest) (*model.GetLocationsResponse, error) {
 	return s.store.GetLocations(req)
+}
+
+func (s *Service) UpdateLocations(req *model.UpdateLocationsRequest) (*model.UpdateLocationsResponse, error) {
+	return s.store.UpdateLocations(req)
 }

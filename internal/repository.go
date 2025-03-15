@@ -17,6 +17,7 @@ type Store interface {
 	CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error)
 	GetLocation(req *model.GetLocationRequest) (*model.GetLocationResponse, error)
 	GetLocations(req *model.GetLocationsRequest) (*model.GetLocationsResponse, error)
+	UpdateLocations(req *model.UpdateLocationsRequest) (*model.UpdateLocationsResponse, error)
 }
 
 type MongoDBStore struct {
@@ -140,4 +141,80 @@ func (store *MongoDBStore) GetLocations(req *model.GetLocationsRequest) (*model.
 	}
 
 	return &model.GetLocationsResponse{Locations: locations}, nil
+}
+
+func (store *MongoDBStore) UpdateLocations(req *model.UpdateLocationsRequest) (*model.UpdateLocationsResponse, error) {
+	collection := store.Client.Database("location").Collection("locations")
+
+	updatedIDs := []string{}
+	failedIDs := []string{}
+
+	var totalModified int64
+
+	for _, location := range req.Locations {
+		objectID, err := primitive.ObjectIDFromHex(location.ID)
+		if err != nil {
+			failedIDs = append(failedIDs, location.ID)
+			continue
+		}
+
+		updateData := bson.M{}
+		orConditions := []bson.M{}
+
+		if location.Name != "" {
+			updateData["name"] = location.Name
+			orConditions = append(orConditions, bson.M{"name": bson.M{"$ne": location.Name}})
+		}
+
+		if location.Latitude != 0.0 {
+			updateData["latitude"] = location.Latitude
+			orConditions = append(orConditions, bson.M{"latitude": bson.M{"$ne": location.Latitude}})
+		}
+
+		if location.Longitude != 0.0 {
+			updateData["longitude"] = location.Longitude
+			orConditions = append(orConditions, bson.M{"longitude": bson.M{"$ne": location.Longitude}})
+		}
+
+		if location.MarkerColor != "" {
+			updateData["marker_color"] = location.MarkerColor
+			orConditions = append(orConditions, bson.M{"marker_color": bson.M{"$ne": location.MarkerColor}})
+		}
+
+		if len(updateData) == 0 {
+			failedIDs = append(failedIDs, location.ID)
+			continue
+		}
+
+		filter := bson.M{
+			"_id": objectID,
+			"$or": orConditions,
+		}
+
+		updateData["updated_at"] = time.Now()
+		update := bson.M{"$set": updateData}
+
+		result, err := collection.UpdateOne(context.TODO(), filter, update)
+		if err != nil {
+			failedIDs = append(failedIDs, location.ID)
+			continue
+		}
+
+		if result.ModifiedCount > 0 {
+			updatedIDs = append(updatedIDs, location.ID)
+			totalModified += result.ModifiedCount
+		} else {
+			failedIDs = append(failedIDs, location.ID)
+		}
+	}
+
+	if len(updatedIDs) == 0 && len(failedIDs) == 0 {
+		return nil, mongo.ErrNoDocuments
+	}
+
+	return &model.UpdateLocationsResponse{
+		UpdatedIDs:   updatedIDs,
+		FailedIDs:    failedIDs,
+		UpdatedCount: totalModified,
+	}, nil
 }

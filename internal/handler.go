@@ -15,6 +15,7 @@ type actions interface {
 	CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error)
 	GetLocation(req *model.GetLocationRequest) (*model.GetLocationResponse, error)
 	GetLocations(req *model.GetLocationsRequest) (*model.GetLocationsResponse, error)
+	UpdateLocations(req *model.UpdateLocationsRequest) (*model.UpdateLocationsResponse, error)
 }
 
 func NewHandler(service actions) *Handler {
@@ -25,6 +26,7 @@ func (h *Handler) RegisterRoutes(app *fiber.App) {
 	app.Post("/location", h.CreateLocation)
 	app.Get("/location", h.GetLocation)
 	app.Get("/locations", h.GetLocations)
+	app.Patch("/locations", h.UpdateLocations)
 }
 
 func (h *Handler) CreateLocation(ctx *fiber.Ctx) error {
@@ -73,6 +75,30 @@ func (h *Handler) GetLocations(ctx *fiber.Ctx) error {
 	}
 
 	res, err := h.service.GetLocations(&req)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(res)
+}
+
+func (h *Handler) UpdateLocations(ctx *fiber.Ctx) error {
+	var req model.UpdateLocationsRequest
+
+	if err := ctx.BodyParser(&req); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "Invalid request body",
+			"details": err.Error(),
+		})
+	}
+
+	if len(req.Locations) == 0 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "No locations provided",
+		})
+	}
+
+	res, err := h.service.UpdateLocations(&req)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
