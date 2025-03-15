@@ -53,3 +53,18 @@ func (mr *MockactionsMockRecorder) CreateLocation(req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLocation", reflect.TypeOf((*Mockactions)(nil).CreateLocation), req)
 }
+
+// GetLocation mocks base method.
+func (m *Mockactions) GetLocation(req *model.GetLocationRequest) (*model.GetLocationResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLocation", req)
+	ret0, _ := ret[0].(*model.GetLocationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLocation indicates an expected call of GetLocation.
+func (mr *MockactionsMockRecorder) GetLocation(req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLocation", reflect.TypeOf((*Mockactions)(nil).GetLocation), req)
+}

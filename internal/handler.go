@@ -4,6 +4,7 @@ import (
 	"location-api/model"
 
 	"github.com/gofiber/fiber/v2"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Handler struct {
@@ -12,6 +13,7 @@ type Handler struct {
 
 type actions interface {
 	CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error)
+	GetLocation(req *model.GetLocationRequest) (*model.GetLocationResponse, error)
 }
 
 func NewHandler(service actions) *Handler {
@@ -20,6 +22,7 @@ func NewHandler(service actions) *Handler {
 
 func (h *Handler) RegisterRoutes(app *fiber.App) {
 	app.Post("/location", h.CreateLocation)
+	app.Get("/location", h.GetLocation)
 }
 
 func (h *Handler) CreateLocation(ctx *fiber.Ctx) error {
@@ -33,6 +36,26 @@ func (h *Handler) CreateLocation(ctx *fiber.Ctx) error {
 	}
 
 	res, err := h.service.CreateLocation(&req)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(res)
+}
+
+func (h *Handler) GetLocation(ctx *fiber.Ctx) error {
+	var req model.GetLocationRequest
+
+	if err := ctx.QueryParser(&req); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
+	}
+
+	_, err := primitive.ObjectIDFromHex(req.ID)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid ID format"})
+	}
+
+	res, err := h.service.GetLocation(&req)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}

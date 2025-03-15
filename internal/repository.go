@@ -15,6 +15,7 @@ import (
 
 type Store interface {
 	CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error)
+	GetLocation(req *model.GetLocationRequest) (*model.GetLocationResponse, error)
 }
 
 type MongoDBStore struct {
@@ -65,4 +66,32 @@ func (store *MongoDBStore) CreateLocation(req *model.CreateLocationRequest) (*mo
 	}
 
 	return &model.CreateLocationResponse{ID: insertedID.Hex()}, nil
+}
+
+func (store *MongoDBStore) GetLocation(req *model.GetLocationRequest) (*model.GetLocationResponse, error) {
+	collection := store.Client.Database("location").Collection("locations")
+
+	objectID, err := primitive.ObjectIDFromHex(req.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	filter := bson.M{"_id": objectID}
+
+	var location model.GetLocationResponse
+	if err := collection.FindOne(context.TODO(), filter).Decode(&location); err != nil {
+		return nil, err
+	}
+
+	if location.ID == "" {
+		return nil, mongo.ErrNoDocuments
+	}
+
+	return &model.GetLocationResponse{
+		ID:          location.ID,
+		Name:        location.Name,
+		Latitude:    location.Latitude,
+		Longitude:   location.Longitude,
+		MarkerColor: location.MarkerColor,
+	}, nil
 }

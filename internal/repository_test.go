@@ -2,11 +2,15 @@ package internal
 
 import (
 	"context"
+	"location-api/model"
 	"log"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/mongodb"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -67,7 +71,7 @@ func TestMongoDBStore_CreateLocation(t *testing.T) {
 		store, clean := prepareTestStore(t)
 		defer clean()
 
-		req := &testLocationReq
+		req := &testCreateLocationReq
 
 		resp, err := store.CreateLocation(req)
 		if err != nil {
@@ -79,5 +83,69 @@ func TestMongoDBStore_CreateLocation(t *testing.T) {
 		}
 
 		t.Logf("Created location with ID: %s", resp.ID)
+	})
+}
+
+func TestMongoDBStore_GetLocation(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
+	t.Run("should return error document not found", func(t *testing.T) {
+		store, clean := prepareTestStore(t)
+		defer clean()
+
+		insertedID := "5f9b1f3b1c9d440000f1b4b0"
+
+		req := &model.GetLocationRequest{
+			ID: insertedID,
+		}
+
+		resp, err := store.GetLocation(req)
+
+		if err == nil {
+			t.Fatalf("Expected error, but got nil")
+		}
+
+		assert.Nil(t, resp)
+		assert.Equal(t, mongo.ErrNoDocuments, err)
+	})
+
+	t.Run("should get a location", func(t *testing.T) {
+		store, clean := prepareTestStore(t)
+		defer clean()
+
+		collection := store.Client.Database("location").Collection("locations")
+		locationDoc := bson.M{
+			"name":         "test3",
+			"latitude":     124.12,
+			"longitude":    134.12,
+			"marker_color": "FFFAFF",
+		}
+
+		result, err := collection.InsertOne(context.Background(), locationDoc)
+		if err != nil {
+			t.Fatalf("Failed to insert location: %v", err)
+		}
+
+		insertedID, ok := result.InsertedID.(primitive.ObjectID)
+		if !ok {
+			t.Fatalf("Failed to convert inserted ID to ObjectID")
+		}
+
+		req := &model.GetLocationRequest{
+			ID: insertedID.Hex(),
+		}
+
+		resp, err := store.GetLocation(req)
+		if err != nil {
+			t.Fatalf("Failed to get location: %v", err)
+		}
+
+		if resp.ID == "" {
+			t.Fatalf("Expected location ID to be set, got empty string")
+		}
+
+		t.Logf("Got location with ID: %s", resp.ID)
 	})
 }

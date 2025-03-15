@@ -13,6 +13,10 @@ type CreateLocationRequest struct {
 	MarkerColor string  `json:"marker_color" bson:"marker_color" validate:"required,len=6,hexadecimal"`
 }
 
+type GetLocationRequest struct {
+	ID string `query:"id" json:"id" bson:"_id" validate:"required"`
+}
+
 func (req *CreateLocationRequest) ValidateLocation() error {
 	return validate.Struct(req)
 }

@@ -9,18 +9,30 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-var testLocationReq = model.CreateLocationRequest{
+var testCreateLocationReq = model.CreateLocationRequest{
 	Name:        "test",
 	Latitude:    1.1,
 	Longitude:   1.1,
 	MarkerColor: "FFFFFF",
 }
 
-var testLocationRes = model.CreateLocationResponse{
+var testCreateLocationRes = model.CreateLocationResponse{
 	ID: "test",
 }
 
-func TestService_GetUsers(t *testing.T) {
+var testGetLocationReq = model.GetLocationRequest{
+	ID: "67d562e3d9f2d225ca4d9918",
+}
+
+var testGetLocationRes = model.GetLocationResponse{
+	ID:          "test",
+	Name:        "test",
+	Latitude:    1.1,
+	Longitude:   1.1,
+	MarkerColor: "FFFFFF",
+}
+
+func TestService_CreateLocation(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -29,14 +41,14 @@ func TestService_GetUsers(t *testing.T) {
 
 		mockRepository.
 			EXPECT().
-			CreateLocation(&testLocationReq).
-			Return(&testLocationRes, nil).
+			CreateLocation(&testCreateLocationReq).
+			Return(&testCreateLocationRes, nil).
 			Times(1)
 
 		service := NewService(mockRepository)
 
-		locationRes, _ := service.CreateLocation(&testLocationReq)
-		assert.Equal(t, &testLocationRes, locationRes)
+		locationRes, _ := service.CreateLocation(&testCreateLocationReq)
+		assert.Equal(t, &testCreateLocationRes, locationRes)
 	})
 
 	t.Run("return error", func(t *testing.T) {
@@ -48,13 +60,52 @@ func TestService_GetUsers(t *testing.T) {
 
 		mockRepository.
 			EXPECT().
-			CreateLocation(&testLocationReq).
+			CreateLocation(&testCreateLocationReq).
 			Return(nil, &fiber.Error{Code: 500, Message: "Internal Server Error"}).
 			Times(1)
 
 		service := NewService(mockRepository)
 
-		_, err = service.CreateLocation(&testLocationReq)
+		_, err = service.CreateLocation(&testCreateLocationReq)
+		assert.Equal(t, expectedError, err)
+	})
+}
+
+func TestService_GetLocation(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	t.Run("should get location properly", func(t *testing.T) {
+		mockRepository := NewMockStore(ctrl)
+
+		mockRepository.
+			EXPECT().
+			GetLocation(&testGetLocationReq).
+			Return(&testGetLocationRes, nil).
+			Times(1)
+
+		service := NewService(mockRepository)
+
+		locationRes, _ := service.GetLocation(&testGetLocationReq)
+		assert.Equal(t, &testGetLocationRes, locationRes)
+	})
+
+	t.Run("return error", func(t *testing.T) {
+		mockRepository := NewMockStore(ctrl)
+
+		var err error
+
+		expectedError := fiber.NewError(fiber.StatusInternalServerError, "Internal Server Error")
+
+		mockRepository.
+			EXPECT().
+			GetLocation(&testGetLocationReq).
+			Return(nil, &fiber.Error{Code: 500, Message: "Internal Server Error"}).
+			Times(1)
+
+		service := NewService(mockRepository)
+
+		_, err = service.GetLocation(&testGetLocationReq)
 		assert.Equal(t, expectedError, err)
 	})
 }

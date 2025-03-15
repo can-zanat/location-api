@@ -16,31 +16,31 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockLocationDbStore is a mock of LocationDBStore interface.
-type MockLocationDbStore struct {
+// MockLocationDBStore is a mock of LocationDBStore interface.
+type MockLocationDBStore struct {
 	ctrl     *gomock.Controller
-	recorder *MockLocationDbStoreMockRecorder
+	recorder *MockLocationDBStoreMockRecorder
 }
 
-// MockLocationDbStoreMockRecorder is the mock recorder for MockLocationDbStore.
-type MockLocationDbStoreMockRecorder struct {
-	mock *MockLocationDbStore
+// MockLocationDBStoreMockRecorder is the mock recorder for MockLocationDBStore.
+type MockLocationDBStoreMockRecorder struct {
+	mock *MockLocationDBStore
 }
 
-// NewMockLocationDbStore creates a new mock instance.
-func NewMockLocationDbStore(ctrl *gomock.Controller) *MockLocationDbStore {
-	mock := &MockLocationDbStore{ctrl: ctrl}
-	mock.recorder = &MockLocationDbStoreMockRecorder{mock}
+// NewMockLocationDBStore creates a new mock instance.
+func NewMockLocationDBStore(ctrl *gomock.Controller) *MockLocationDBStore {
+	mock := &MockLocationDBStore{ctrl: ctrl}
+	mock.recorder = &MockLocationDBStoreMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockLocationDbStore) EXPECT() *MockLocationDbStoreMockRecorder {
+func (m *MockLocationDBStore) EXPECT() *MockLocationDBStoreMockRecorder {
 	return m.recorder
 }
 
 // CreateLocation mocks base method.
-func (m *MockLocationDbStore) CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error) {
+func (m *MockLocationDBStore) CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateLocation", req)
 	ret0, _ := ret[0].(*model.CreateLocationResponse)
@@ -49,7 +49,22 @@ func (m *MockLocationDbStore) CreateLocation(req *model.CreateLocationRequest) (
 }
 
 // CreateLocation indicates an expected call of CreateLocation.
-func (mr *MockLocationDbStoreMockRecorder) CreateLocation(req any) *gomock.Call {
+func (mr *MockLocationDBStoreMockRecorder) CreateLocation(req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLocation", reflect.TypeOf((*MockLocationDbStore)(nil).CreateLocation), req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateLocation", reflect.TypeOf((*MockLocationDBStore)(nil).CreateLocation), req)
+}
+
+// GetLocation mocks base method.
+func (m *MockLocationDBStore) GetLocation(req *model.GetLocationRequest) (*model.GetLocationResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLocation", req)
+	ret0, _ := ret[0].(*model.GetLocationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetLocation indicates an expected call of GetLocation.
+func (mr *MockLocationDBStoreMockRecorder) GetLocation(req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLocation", reflect.TypeOf((*MockLocationDBStore)(nil).GetLocation), req)
 }

@@ -8,6 +8,7 @@ type Service struct {
 
 type LocationDBStore interface {
 	CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error)
+	GetLocation(req *model.GetLocationRequest) (*model.GetLocationResponse, error)
 }
 
 func NewService(s Store) *Service {
@@ -16,4 +17,8 @@ func NewService(s Store) *Service {
 
 func (s *Service) CreateLocation(req *model.CreateLocationRequest) (*model.CreateLocationResponse, error) {
 	return s.store.CreateLocation(req)
+}
+
+func (s *Service) GetLocation(req *model.GetLocationRequest) (*model.GetLocationResponse, error) {
+	return s.store.GetLocation(req)
 }
