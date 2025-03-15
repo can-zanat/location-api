@@ -1,0 +1,3 @@
+# .config/local.yaml
+mongoDB:
+  uri: "mongodb://localhost:27017"
