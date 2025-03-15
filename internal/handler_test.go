@@ -2,6 +2,7 @@ package internal
 
 import (
 	"bytes"
+	"location-api/model"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -329,6 +330,65 @@ func TestHandler_UpdateLocations(t *testing.T) {
 
 		assert.Nil(t, err)
 		assert.Equal(t, http.StatusOK, res.StatusCode)
+	})
+
+	t.Run("should return partial content", func(t *testing.T) {
+		mockService, mockServiceController := createMockService(t)
+		defer mockServiceController.Finish()
+
+		app := createTestApp()
+
+		mockService.
+			EXPECT().
+			UpdateLocations(&testUpdateLocationsReqForPartialContent).
+			Return(&model.UpdateLocationsResponse{
+				UpdatedIDs:   []string{"67d562e3d9f2d225ca4d9918", "67d562e3d9f2d225ca4d9919"},
+				FailedIDs:    []string{"67d562e3d9ddd225ca4d9919"},
+				UpdatedCount: 2,
+			}, nil).
+			Times(1)
+
+		handler := NewHandler(mockService)
+		handler.RegisterRoutes(app)
+
+		reqBody := `{
+			"locations": [
+				{
+					"id": "67d562e3d9f2d225ca4d9918",
+					"name": "test",
+					"latitude": 1.1,
+					"longitude": 1.1,
+					"marker_color": "FFFFFF"
+				},
+				{
+					"id": "67d562e3d9f2d225ca4d9919",
+					"name": "test2",
+					"latitude": 2.2,
+					"longitude": 2.2,
+					"marker_color": "000000"
+				},
+				{
+					"id": "67d562e3d9ddd225ca4d9919",
+					"name": "test3",
+					"latitude": 3.3,
+					"longitude": 3.3,
+					"marker_color": "000000"
+				}
+			]
+		}`
+
+		req := httptest.NewRequest(
+			http.MethodPatch,
+			"/locations",
+			bytes.NewReader([]byte(reqBody)),
+		)
+		req.Header.Set("Content-Type", "application/json")
+
+		res, err := app.Test(req)
+		defer res.Body.Close()
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusPartialContent, res.StatusCode)
 	})
 
 	t.Run("should return internal server error", func(t *testing.T) {

@@ -68,6 +68,32 @@ var testUpdateLocationsReq = model.UpdateLocationsRequest{
 	},
 }
 
+var testUpdateLocationsReqForPartialContent = model.UpdateLocationsRequest{
+	Locations: []model.UpdateLocation{
+		{
+			ID:          "67d562e3d9f2d225ca4d9918",
+			Name:        "test",
+			Latitude:    1.1,
+			Longitude:   1.1,
+			MarkerColor: "FFFFFF",
+		},
+		{
+			ID:          "67d562e3d9f2d225ca4d9919",
+			Name:        "test2",
+			Latitude:    2.2,
+			Longitude:   2.2,
+			MarkerColor: "000000",
+		},
+		{
+			ID:          "67d562e3d9ddd225ca4d9919",
+			Name:        "test3",
+			Latitude:    3.3,
+			Longitude:   3.3,
+			MarkerColor: "000000",
+		},
+	},
+}
+
 var testUpdateLocationsRes = model.UpdateLocationsResponse{
 	UpdatedIDs:   []string{"67d562e3d9f2d225ca4d9918", "67d562e3d9f2d225ca4d9919"},
 	FailedIDs:    []string{},

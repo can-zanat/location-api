@@ -103,5 +103,9 @@ func (h *Handler) UpdateLocations(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	if len(res.FailedIDs) > 0 && len(res.UpdatedIDs) > 0 {
+		return ctx.Status(fiber.StatusPartialContent).JSON(res)
+	}
+
 	return ctx.Status(fiber.StatusOK).JSON(res)
 }
