@@ -58,7 +58,6 @@ linters:
     - thelper
     - tparallel
     - unconvert
-    - unparam
     - unused
     - whitespace
     - wsl
