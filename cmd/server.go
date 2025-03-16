@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,8 +12,12 @@ import (
 
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
+
+const maxRequestPerSecond = 1000
+const maxRequestPerIP = 2
 
 type Handler interface {
 	RegisterRoutes(app *fiber.App)
@@ -34,7 +37,7 @@ func New(port string, handler Handler, logger *zap.Logger) Server {
 	server.app.Use(cors.New())
 
 	server.app.Use(limiter.New(limiter.Config{
-		Max:        1000,
+		Max:        maxRequestPerSecond,
 		Expiration: time.Second,
 		LimitReached: func(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
@@ -44,7 +47,7 @@ func New(port string, handler Handler, logger *zap.Logger) Server {
 	}))
 
 	server.app.Use(limiter.New(limiter.Config{
-		Max:        2,
+		Max:        maxRequestPerIP,
 		Expiration: time.Second,
 		KeyGenerator: func(c *fiber.Ctx) string {
 			return c.IP()
