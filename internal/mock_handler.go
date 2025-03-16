@@ -84,6 +84,21 @@ func (mr *MockactionsMockRecorder) GetLocations(req any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLocations", reflect.TypeOf((*Mockactions)(nil).GetLocations), req)
 }
 
+// GetRoutes mocks base method.
+func (m *Mockactions) GetRoutes(req *model.GetRoutesRequest) (*model.GetRoutesResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRoutes", req)
+	ret0, _ := ret[0].(*model.GetRoutesResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRoutes indicates an expected call of GetRoutes.
+func (mr *MockactionsMockRecorder) GetRoutes(req any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRoutes", reflect.TypeOf((*Mockactions)(nil).GetRoutes), req)
+}
+
 // UpdateLocations mocks base method.
 func (m *Mockactions) UpdateLocations(req *model.UpdateLocationsRequest) (*model.UpdateLocationsResponse, error) {
 	m.ctrl.T.Helper()

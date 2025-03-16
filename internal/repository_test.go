@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"location-api/internal/helper"
 	"location-api/model"
 	"log"
 	"testing"
@@ -60,6 +61,66 @@ func prepareTestStore(t *testing.T) (store *MongoDBStore, clean func()) {
 	s := NewStoreWithURI(containerURI)
 
 	return s, clean
+}
+
+func TestMongoDBStore_GetRoutes(t *testing.T) {
+	if testing.Short() {
+		t.Skip()
+	}
+
+	t.Run("should return no routes found", func(t *testing.T) {
+		store, clean := prepareTestStore(t)
+		defer clean()
+
+		_ = helper.DeleteCache(cacheKey)
+
+		_ = store.Client.Database("location").Collection("locations").Drop(context.Background())
+
+		resp, err := store.GetRoutes()
+		if err == nil {
+			t.Fatalf("Expected error, but got nil")
+		}
+
+		assert.Nil(t, resp)
+		assert.Equal(t, mongo.ErrNoDocuments, err)
+	})
+
+	t.Run("should get routes", func(t *testing.T) {
+		store, clean := prepareTestStore(t)
+		defer clean()
+
+		collection := store.Client.Database("location").Collection("locations")
+		locationDocs := []interface{}{
+			bson.M{
+				"name":         "test3",
+				"latitude":     124.12,
+				"longitude":    134.12,
+				"marker_color": "FFFAFF",
+			},
+			bson.M{
+				"name":         "test5",
+				"latitude":     125.12,
+				"longitude":    135.12,
+				"marker_color": "000000",
+			},
+		}
+
+		_, err := collection.InsertMany(context.Background(), locationDocs)
+		if err != nil {
+			t.Fatalf("Failed to insert locations: %v", err)
+		}
+
+		resp, err := store.GetRoutes()
+		if err != nil {
+			t.Fatalf("Failed to get routes: %v", err)
+		}
+
+		if len(resp.Locations) == 0 {
+			t.Fatalf("Expected routes to be returned, got empty slice")
+		}
+
+		t.Logf("Got %d routes", len(resp.Locations))
+	})
 }
 
 func TestMongoDBStore_CreateLocation(t *testing.T) {

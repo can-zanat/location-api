@@ -34,6 +34,11 @@ type UpdateLocationsRequest struct {
 	Locations []UpdateLocation `json:"locations" bson:"locations" validate:"required,dive"`
 }
 
+type GetRoutesRequest struct {
+	Latitude  float64 `query:"latitude" json:"latitude" bson:"latitude" validate:"required"`
+	Longitude float64 `query:"longitude" json:"longitude" bson:"longitude" validate:"required"`
+}
+
 func (req *CreateLocationRequest) ValidateLocation() error {
 	return validate.Struct(req)
 }

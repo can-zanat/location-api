@@ -100,6 +100,32 @@ var testUpdateLocationsRes = model.UpdateLocationsResponse{
 	UpdatedCount: 2,
 }
 
+var testGetRoutesReq = model.GetRoutesRequest{
+	Latitude:  1.1,
+	Longitude: 1.1,
+}
+
+var testGetRoutesRes = model.GetRoutesResponse{
+	Routes: []model.Route{
+		{
+			ID:          "67d562e3d9f2d225ca4d9918",
+			Name:        "test",
+			Distance:    0,
+			MarkerColor: "FFFFFF",
+		},
+	},
+}
+
+var testGetRoutesDBResponse = model.GetAllLocationsDBResponse{Locations: []model.GetLocationResponse{
+	{
+		ID:          "67d562e3d9f2d225ca4d9918",
+		Name:        "test",
+		Latitude:    1.1,
+		Longitude:   1.1,
+		MarkerColor: "FFFFFF",
+	},
+}}
+
 func TestService_CreateLocation(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -251,6 +277,45 @@ func TestService_UpdateLocations(t *testing.T) {
 		service := NewService(mockRepository)
 
 		_, err := service.UpdateLocations(&testUpdateLocationsReq)
+		assert.Equal(t, expectedError, err)
+	})
+}
+
+func TestService_GetRoutes(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	t.Run("should get routes properly", func(t *testing.T) {
+		mockRepository := NewMockStore(ctrl)
+
+		mockRepository.
+			EXPECT().
+			GetRoutes().
+			Return(&testGetRoutesDBResponse, nil).
+			Times(1)
+
+		service := NewService(mockRepository)
+
+		routesRes, _ := service.GetRoutes(&testGetRoutesReq)
+		assert.Equal(t, &testGetRoutesRes, routesRes)
+	})
+
+	t.Run("return error", func(t *testing.T) {
+		mockRepository := NewMockStore(ctrl)
+
+		var err error
+
+		expectedError := fiber.NewError(fiber.StatusInternalServerError, "Internal Server Error")
+
+		mockRepository.
+			EXPECT().
+			GetRoutes().
+			Return(nil, &fiber.Error{Code: 500, Message: "Internal Server Error"}).
+			Times(1)
+
+		service := NewService(mockRepository)
+
+		_, err = service.GetRoutes(&testGetRoutesReq)
 		assert.Equal(t, expectedError, err)
 	})
 }

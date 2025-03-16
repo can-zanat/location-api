@@ -8,7 +8,7 @@ lint:
 	golangci-lint run -c .golangci.yml
 
 unit-test:
-	go test ./... -short
+	go test ./... -v
 
 generate-mocks:
 	mockgen -source=./internal/handler.go -destination=./internal/mock_handler.go -package=internal

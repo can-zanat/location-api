@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"location-api/configs"
+	"location-api/internal/helper"
 	"location-api/model"
 	"log"
 	"time"
@@ -18,11 +19,16 @@ type Store interface {
 	GetLocation(req *model.GetLocationRequest) (*model.GetLocationResponse, error)
 	GetLocations(req *model.GetLocationsRequest) (*model.GetLocationsResponse, error)
 	UpdateLocations(req *model.UpdateLocationsRequest) (*model.UpdateLocationsResponse, error)
+	GetRoutes() (*model.GetAllLocationsDBResponse, error)
 }
 
 type MongoDBStore struct {
 	Client *mongo.Client
 }
+
+const cacheKey = "cached_db_locations"
+const cacheDuration = 30 * time.Second
+const dbTimeout = 5 * time.Minute
 
 func NewStore() *MongoDBStore {
 	config, err := configs.LoadConfig()
@@ -146,8 +152,9 @@ func (store *MongoDBStore) GetLocations(req *model.GetLocationsRequest) (*model.
 func (store *MongoDBStore) UpdateLocations(req *model.UpdateLocationsRequest) (*model.UpdateLocationsResponse, error) {
 	collection := store.Client.Database("location").Collection("locations")
 
-	updatedIDs := []string{}
-	failedIDs := []string{}
+	var updatedIDs []string
+
+	var failedIDs []string
 
 	var totalModified int64
 
@@ -217,4 +224,52 @@ func (store *MongoDBStore) UpdateLocations(req *model.UpdateLocationsRequest) (*
 		FailedIDs:    failedIDs,
 		UpdatedCount: totalModified,
 	}, nil
+}
+
+func (store *MongoDBStore) GetRoutes() (*model.GetAllLocationsDBResponse, error) {
+	var cachedLocations model.GetAllLocationsDBResponse
+	if err := helper.GetCache(cacheKey, &cachedLocations); err == nil {
+		log.Println("INFO: Data get from cache.")
+		return &cachedLocations, nil
+	}
+
+	log.Println("WARNING: Redis empty, data will get from db...")
+
+	collection := store.Client.Database("location").Collection("locations")
+
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(ctx)
+
+	var locations []model.GetLocationResponse
+
+	for cursor.Next(ctx) {
+		var location model.GetLocationResponse
+		if err := cursor.Decode(&location); err != nil {
+			return nil, err
+		}
+
+		locations = append(locations, location)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(locations) == 0 {
+		log.Println("ERROR: No documents found in database.")
+		return nil, mongo.ErrNoDocuments
+	}
+
+	dbResponse := &model.GetAllLocationsDBResponse{Locations: locations}
+	_ = helper.SetCache(cacheKey, dbResponse, cacheDuration)
+
+	log.Println("INFO: Data write redis.")
+
+	return &model.GetAllLocationsDBResponse{Locations: locations}, nil
 }

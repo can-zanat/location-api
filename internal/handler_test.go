@@ -463,6 +463,87 @@ func TestHandler_UpdateLocations(t *testing.T) {
 	})
 }
 
+func TestHandler_GetRoutes(t *testing.T) {
+	t.Run("should get routes properly", func(t *testing.T) {
+		mockService, mockServiceController := createMockService(t)
+		defer mockServiceController.Finish()
+
+		app := createTestApp()
+
+		mockService.
+			EXPECT().
+			GetRoutes(&testGetRoutesReq).
+			Return(&testGetRoutesRes, nil).
+			Times(1)
+
+		handler := NewHandler(mockService)
+		handler.RegisterRoutes(app)
+
+		req := httptest.NewRequest(
+			http.MethodGet,
+			"/routes?longitude=1.1&latitude=1.1",
+			http.NoBody,
+		)
+		req.Header.Set("Content-Type", "application/json")
+
+		res, err := app.Test(req)
+		defer res.Body.Close()
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusOK, res.StatusCode)
+	})
+
+	t.Run("should return internal server error", func(t *testing.T) {
+		mockService, mockServiceController := createMockService(t)
+		defer mockServiceController.Finish()
+
+		app := createTestApp()
+
+		mockService.
+			EXPECT().
+			GetRoutes(&testGetRoutesReq).
+			Return(nil, assert.AnError).
+			Times(1)
+
+		handler := NewHandler(mockService)
+		handler.RegisterRoutes(app)
+
+		req := httptest.NewRequest(
+			http.MethodGet,
+			"/routes?longitude=1.1&latitude=1.1",
+			http.NoBody,
+		)
+
+		res, err := app.Test(req)
+		defer res.Body.Close()
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusInternalServerError, res.StatusCode)
+	})
+	t.Run("should return bad request error", func(t *testing.T) {
+		mockService, mockServiceController := createMockService(t)
+		defer mockServiceController.Finish()
+
+		app := createTestApp()
+
+		handler := NewHandler(mockService)
+		handler.RegisterRoutes(app)
+
+		req := httptest.NewRequest(
+			http.MethodGet,
+			"/routes?longitude=test&latitude=1.1",
+			http.NoBody,
+		)
+		req.Header.Set("Content-Type", "application/json")
+
+		res, err := app.Test(req)
+		defer res.Body.Close()
+
+		assert.Nil(t, err)
+		assert.Equal(t, http.StatusBadRequest, res.StatusCode)
+	})
+}
+
 func createMockService(t *testing.T) (*Mockactions, *gomock.Controller) {
 	t.Helper()
 

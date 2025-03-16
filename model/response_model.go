@@ -21,3 +21,18 @@ type UpdateLocationsResponse struct {
 	FailedIDs    []string `json:"failed_ids"`
 	UpdatedCount int64    `json:"updated_count"`
 }
+
+type Route struct {
+	ID          string  `json:"id" bson:"_id"`
+	Name        string  `json:"name" bson:"name"`
+	Distance    float64 `json:"distance" bson:"distance"`
+	MarkerColor string  `json:"marker_color" bson:"marker_color"`
+}
+
+type GetRoutesResponse struct {
+	Routes []Route `json:"routes"`
+}
+
+type GetAllLocationsDBResponse struct {
+	Locations []GetLocationResponse `json:"locations"`
+}
