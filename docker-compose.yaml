@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "96:96"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - app_network
+    environment:
+      MONGO_URI: "mongodb://root:rootpassword@db:27017/location?authSource=admin"
+
+  db:
+    image: mongo:latest
+    container_name: mongodb_container
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: location
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    networks:
+      - app_network
+    volumes:
+      - db_data:/data/db
+      - ./init.js:/docker-entrypoint-initdb.d/init.js
+    healthcheck:
+      test: [ "CMD-SHELL", "echo 'db.runCommand({ping:1}).ok' | mongosh --quiet \
+          --host localhost --port 27017 \
+          -u root -p rootpassword \
+          --authenticationDatabase admin \
+          | grep 1" ]
+      interval: 10s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    container_name: redis_container
+    ports:
+      - "6379:6379"
+    networks:
+      - app_network
+
+networks:
+  app_network:
+
+volumes:
+  db_data:
