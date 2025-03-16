@@ -1,9 +1,11 @@
 package main
 
 import (
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -27,8 +29,32 @@ type Server struct {
 func New(port string, handler Handler, logger *zap.Logger) Server {
 	app := fiber.New(fiber.Config{})
 	server := Server{app: app, port: port, logger: logger}
+
 	server.app.Use(recover.New())
 	server.app.Use(cors.New())
+
+	server.app.Use(limiter.New(limiter.Config{
+		Max:        1000,
+		Expiration: time.Second,
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"error": "Global API rate limit exceeded!",
+			})
+		},
+	}))
+
+	server.app.Use(limiter.New(limiter.Config{
+		Max:        2,
+		Expiration: time.Second,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			return c.IP()
+		},
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"error": "Too many requests, slow down!",
+			})
+		},
+	}))
 
 	server.addRoutes()
 
