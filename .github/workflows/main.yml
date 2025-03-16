@@ -1,0 +1,40 @@
+name: Go CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.22.5'
+
+    - name: Install Dependencies
+      run: |
+        go mod tidy
+        curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+        go install go.uber.org/mock/gomock
+
+    - name: Run Linter
+      run: make lint
+
+    - name: Generate Mocks
+      run: make generate-mocks
+
+    - name: Run Unit Tests
+      run: make unit-test
+
+    - name: Build Project
+      run: make build
