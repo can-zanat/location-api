@@ -42,3 +42,11 @@ type GetRoutesRequest struct {
 func (req *CreateLocationRequest) ValidateLocation() error {
 	return validate.Struct(req)
 }
+
+func (req *UpdateLocationsRequest) ValidateLocation() error {
+	return validate.Struct(req)
+}
+
+func (req *GetRoutesRequest) ValidateLocation() error {
+	return validate.Struct(req)
+}

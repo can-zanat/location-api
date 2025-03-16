@@ -100,6 +100,10 @@ func (h *Handler) UpdateLocations(ctx *fiber.Ctx) error {
 		})
 	}
 
+	if err := req.ValidateLocation(); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+
 	res, err := h.service.UpdateLocations(&req)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
@@ -117,6 +121,10 @@ func (h *Handler) GetRoutes(ctx *fiber.Ctx) error {
 
 	if err := ctx.QueryParser(&req); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid request"})
+	}
+
+	if err := req.ValidateLocation(); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	res, err := h.service.GetRoutes(&req)
